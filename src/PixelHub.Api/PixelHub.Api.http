@@ -1,4 +1,4 @@
-# Carnet de tests PixelHub — cliquer sur « Send request » au-dessus de chaque bloc.
+# Carnet de tests PixelHub - cliquer sur « Send request » au-dessus de chaque bloc.
 # Port : celui affiché par `dotnet run` (5199 via launchSettings.json),
 # et aussi celui de l'API conteneurisée (docker compose --profile app up -d).
 @host = http://localhost:5199
@@ -6,29 +6,29 @@
 ### Santé
 GET {{host}}/
 
-### Séance 1 — PostgreSQL
+### Séance 1 - PostgreSQL
 GET {{host}}/players
 Accept: application/json
 
-### Séance 1 — bonus : créer un joueur
+### Séance 1 - bonus : créer un joueur
 POST {{host}}/players
 Content-Type: application/json
 
 { "pseudo": "Pixel", "coins": 500 }
 
-### Séance 2 — MongoDB : catalogue complet
+### Séance 2 - MongoDB : catalogue complet
 GET {{host}}/games
 Accept: application/json
 
-### Séance 2 — filtrage par genre
+### Séance 2 - filtrage par genre
 GET {{host}}/games/genre/FPS
 Accept: application/json
 
-### Séance 2 — top 3
+### Séance 2 - top 3
 GET {{host}}/games/top/3
 Accept: application/json
 
-### Séance 2 — agrégation : note moyenne par genre
+### Séance 2 - agrégation : note moyenne par genre
 GET {{host}}/games/stats
 Accept: application/json
 
@@ -51,3 +51,41 @@ Accept: application/json
 ### Redis - mesurer le temps
 GET {{host}}/games/timed
 Accept: application/json
+
+### Neo4j - Amis de Krayz
+GET {{host}}/social/Krayz/friends
+Accept: application/json
+
+### Neo4j - Recommandation de Nova
+GET {{host}}/social/Nova/recommendations
+Accept: application/json
+
+### Séance 4 bis - boutique : Nova achète Terraria (1200 pièces)
+POST {{host}}/shop/Nova/buy/Terraria
+
+### Séance 4 bis - boutique : un titre avec espaces et apostrophe s'encode dans l'URL
+POST {{host}}/shop/Nova/buy/Baldur%27s%20Gate%203
+
+### Séance 4 bis - boutique : jeu gratuit (FPS à 0 pièce)
+POST {{host}}/shop/Krayz/buy/Valorant
+
+### Séance 4 bis - boutique : jeu inconnu (404)
+POST {{host}}/shop/Nova/buy/Tetris
+
+### Séance 4 bis - meilleures ventes (Redis)
+GET {{host}}/shop/bestsellers
+Accept: application/json
+
+### Mission 4 — Ombre achète Rocket League, Neo4j arrêté
+POST {{host}}/shop/Ombre/buy/Rocket%20League
+
+### Mission 4 - Profile d'Ombre
+GET {{host}}/players/Nova/profile
+Accept: application/json
+
+### Mission 4 - Recommandations d'Ombre
+GET {{host}}/social/Ombre/recommendations
+Accept: application/json
+
+### Séance 4 bis — mission 4 : reconstruire Neo4j et Redis depuis PostgreSQL
+POST {{host}}/admin/resync
