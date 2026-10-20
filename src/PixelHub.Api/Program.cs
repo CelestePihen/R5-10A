@@ -3,12 +3,19 @@ using MongoDB.Driver;
 using PixelHub.Api.Data;
 using PixelHub.Api.Models;
 using PixelHub.Api.Repositories;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<PixelHubContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
+
+// Redis
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
+
+builder.Services.AddSingleton<ILeaderboard, RedisLeaderboard>();
 
 // Le MongoClient est thread-safe et gère son propre pool de connexions : on l'enregistre donc en singleton
 builder.Services.AddSingleton<IMongoClient>(_ =>
@@ -17,7 +24,10 @@ builder.Services.AddSingleton<IMongoClient>(_ =>
 builder.Services.AddSingleton<IMongoDatabase>(sp =>
     sp.GetRequiredService<IMongoClient>().GetDatabase(builder.Configuration["Mongo:Database"]));
 
-builder.Services.AddSingleton<IGameCatalog, MongoGameCatalog>();
+builder.Services.AddSingleton<MongoGameCatalog>();
+builder.Services.AddSingleton<IGameCatalog>(sp =>
+    new CachedGameCatalog(sp.GetRequiredService<MongoGameCatalog>(),
+                          sp.GetRequiredService<IConnectionMultiplexer>()));
 
 var app = builder.Build();
 
@@ -66,5 +76,24 @@ app.MapGet("/games/top/{count:int}", async (int count, IGameCatalog catalog) =>
 app.MapGet("/games/stats", async (IGameCatalog catalog) =>
     await catalog.GetStatsByGenreAsync()
 );
+
+// Redis
+app.MapPost("/leaderboard/{pseudo}/points/{points:double}",
+    async (string pseudo, double points, ILeaderboard lb) =>
+    { await lb.AddPointsAsync(pseudo, points); return Results.Ok(); });
+
+app.MapGet("/leaderboard/top/{count:int}",
+    async (int count, ILeaderboard lb) => await lb.GetTopAsync(count));
+
+app.MapGet("/leaderboard/rank/{pseudo}",
+    async (string pseudo, ILeaderboard lb) => await lb.GetRankAsync(pseudo));
+
+app.MapGet("/games/timed", async (IGameCatalog catalog) =>
+{
+    var chrono = System.Diagnostics.Stopwatch.StartNew();
+    var jeux = await catalog.GetAllAsync();
+    chrono.Stop();
+    return new { nombre = jeux.Count, millisecondes = chrono.Elapsed.TotalMilliseconds };
+});
 
 app.Run();

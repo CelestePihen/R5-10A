@@ -31,3 +31,23 @@ Accept: application/json
 ### Séance 2 — agrégation : note moyenne par genre
 GET {{host}}/games/stats
 Accept: application/json
+
+### Séance 2.6 - catalogue avec cache Redis
+# Répéter cette requête dans les 60 secondes pour utiliser la valeur en cache.
+GET {{host}}/games
+Accept: application/json
+
+### Redis - ajouter des points au classement
+POST {{host}}/leaderboard/Pixel/points/125.5
+
+### Redis - meilleurs scores
+GET {{host}}/leaderboard/top/10
+Accept: application/json
+
+### Redis - rang d'un joueur
+GET {{host}}/leaderboard/rank/Pixel
+Accept: application/json
+
+### Redis - mesurer le temps
+GET {{host}}/games/timed
+Accept: application/json
